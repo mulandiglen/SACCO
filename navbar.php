@@ -13,6 +13,10 @@
 				<a href="index.php?page=loan_type" class="nav-item nav-loan_type"><span class='icon-field'><i class="fa fa-th-list"></i></span> Loan Types</a>		
 				<?php if($_SESSION['login_type'] == 1): ?>
 				<a href="index.php?page=users" class="nav-item nav-users"><span class='icon-field'><i class="fa fa-users"></i></span> Users</a>
+				<a href="index.php?page=sms" class="nav-item nav-sms"><span class='icon-field'><i class="fa fa-sms"></i></span> SMS</a>
+				<a href="index.php?page=reminder" class="nav-item nav-reminder"><span class='icon-field'><i class="fa fa-reminder"></i></span> Reminder</a>
+				<a href="index.php?page=send" class="nav-item nav-send"><span class='icon-field'><i class="fa fa-send"></i></span> Send</a>
+				<a href="index.php?page=reports" class="nav-item nav-reports"><span class='icon-field'><i class="fa fa-users"></i></span> Reports</a>
 				
 			<?php endif; ?>
 		</div>

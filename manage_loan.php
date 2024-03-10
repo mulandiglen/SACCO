@@ -1,3 +1,4 @@
+
 <?php 
 include('db_connect.php');
 if(isset($_GET['id'])){
@@ -6,8 +7,29 @@ foreach($qry->fetch_array() as $k => $v){
 	$$k = $v;
 }
 }
+$status_message = '';
 
+if (isset($status)) {
+    $status_message = '';
+    if ($status == 4) {
+        $status_message = 'Your loan has been denied.';
+    } elseif ($status == 1) {
+        $status_message = 'Congratulations! Your loan has been approved.';
+    } elseif ($status == 2) {
+        $status_message = 'Your loan has been released.';
+    }
+}
+
+$borrower_phone = '';
+if (isset($borrower_id)) {
+    $borrower = $conn->query("SELECT * FROM borrowers WHERE id = ".$borrower_id);
+    if ($borrower->num_rows > 0) {
+        $borrower_data = $borrower->fetch_assoc();
+        $borrower_phone = $borrower_data['contact_no'];
+    }
+}
 ?>
+
 <div class="container-fluid">
 	<div class="col-lg-12">
 	<form action="" id="loan-application">
@@ -102,8 +124,28 @@ foreach($qry->fetch_array() as $k => $v){
 				</div>
 			</div>
 		</div>
+	
 		
 	</form>
+	<div class="container-fluid">
+    <div class="col-lg-12">
+	
+        <form method="post" action="send.php" id="send">
+            <input type="hidden" name="number" value="<?php echo $borrower_phone; ?>" />
+            <label for="number">Number (<?php echo $borrower_phone; ?>)</label>
+            <textarea name="message" id="message"><?php echo $status_message; ?></textarea>
+            <fieldset>
+                <legend>Provider</legend>
+                <label>
+                    <input type="radio" name="provider" value="infobip" checked /> Infobip
+                </label>
+                <br />
+            </fieldset>
+            <button>Send</button>
+        </form>
+    </div>
+</div>
+
 	</div>
 </div>
 <script>
@@ -150,7 +192,8 @@ foreach($qry->fetch_array() as $k => $v){
 					alert_toast("Loan Data successfully saved.","success")
 					setTimeout(function(){
 						location.reload();
-					},1500)
+					},1500);
+					$('#send').submit(); // Trigger the form submission
 				}
 			}
 		})

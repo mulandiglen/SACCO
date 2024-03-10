@@ -253,23 +253,62 @@ Class Action {
 		if($delete)
 			return 1;
 	}
-	function save_payment(){
-		extract($_POST);
-			$data = " loan_id = $loan_id ";
-			$data .= " , payee = '$payee' ";
-			$data .= " , amount = '$amount' ";
-			$data .= " , penalty_amount = '$penalty_amount' ";
-			$data .= " , overdue = '$overdue' ";
-		if(empty($id)){
-			$save = $this->db->query("INSERT INTO payments set ".$data);
-		}else{
-			$save = $this->db->query("UPDATE payments set ".$data." where id = ".$id);
+	
+	function save_payment()
+{
+    include 'db_connect.php';
+    extract($_POST);
 
-		}
-		if($save)
-			return 1;
+    // Calculate the monthly amount
+    $plan_id = $conn->query("SELECT plan_id FROM loan_list WHERE id = $loan_id")->fetch_assoc()['plan_id'];
+    $interest_percentage = $conn->query("SELECT interest_percentage FROM loan_plan WHERE id = $plan_id")->fetch_assoc()['interest_percentage'];
+    $months = $conn->query("SELECT months FROM loan_plan WHERE id = $plan_id")->fetch_assoc()['months'];
+    $loanAmount = $conn->query("SELECT amount FROM loan_list WHERE id = $loan_id")->fetch_assoc()['amount'];
+    $monthly = ($loanAmount + ($loanAmount * ($interest_percentage / 100))) / $months;
 
-	}
+    // Calculate the total payment
+    $totalPayment = $amount + $penalty_amount + $overdue;
+
+    // Check if there is a balance in payments
+    $previousBalance = $conn->query("SELECT balance FROM payments WHERE loan_id = $loan_id")->fetch_assoc()['balance'];
+
+    if ($previousBalance) {
+        // Subtract the previous balance from the total payment to calculate the new balance
+        $balance = $previousBalance - $totalPayment;
+    } else {
+        $balance = $monthly - $totalPayment;
+    }
+
+    // Check if there is a balance in loan_list
+    $previousTotalBalance = $conn->query("SELECT total_balance FROM loan_list WHERE id = $loan_id")->fetch_assoc()['total_balance'];
+
+    if ($previousTotalBalance) {
+        // Subtract the previous total balance from the total payment to calculate the new total balance
+        $total_balance = $previousTotalBalance - $totalPayment;
+    } else {
+        $total_balance = $loanAmount - $totalPayment;
+    }
+
+    $data = " loan_id = $loan_id ";
+    $data .= " , payee = '$payee' ";
+    $data .= " , amount = '$amount' ";
+    $data .= " , penalty_amount = '$penalty_amount' ";
+    $data .= " , overdue = '$overdue' ";
+    $data .= " , balance = '$balance' ";
+
+    if (empty($id)) {
+        $save = $conn->query("INSERT INTO payments SET " . $data);
+    } else {
+        $save = $conn->query("UPDATE payments SET " . $data . " WHERE id = " . $id);
+    }
+
+    if ($save) {
+        // Update the balance in the loan_list table
+        $conn->query("UPDATE loan_list SET total_balance = '$total_balance' WHERE id = $loan_id");
+
+        echo 1;
+    }
+}
 	function delete_payment(){
 		extract($_POST);
 		$delete = $this->db->query("DELETE FROM payments where id = ".$id);
